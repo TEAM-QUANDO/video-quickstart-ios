@@ -18,7 +18,7 @@ class ViewController: UIViewController {
     var accessToken = "TWILIO_ACCESS_TOKEN"
   
     // Configure remote URL to fetch token from
-    let tokenUrl = "http://localhost:8000/token.php"
+    let tokenUrl = "Rewrite to Twilio Functions URL"
     
     // Video SDK components
     var room: Room?
@@ -247,7 +247,19 @@ class ViewController: UIViewController {
                 self.previewView.addGestureRecognizer(tap)
             }
 
-            camera!.startCapture(device: frontCamera != nil ? frontCamera! : backCamera!) { (captureDevice, videoFormat, error) in
+            let supportedFormats = CameraSource.supportedFormats(captureDevice: backCamera!)
+            var formatFound: VideoFormat?
+            for format in supportedFormats {
+                if let formatCasted = format as? VideoFormat {
+                    if formatCasted.dimensions.height == 720 && formatCasted.dimensions.width == 1280 {
+                        formatFound = formatCasted
+                    }
+                }
+            }
+
+            formatFound?.frameRate = 15
+
+            camera!.startCapture(device: backCamera!, format: formatFound!) { (captureDevice, videoFormat, error) in
                 if let error = error {
                     self.logMessage(messageText: "Capture failed with error.\ncode = \((error as NSError).code) error = \(error.localizedDescription)")
                 } else {
