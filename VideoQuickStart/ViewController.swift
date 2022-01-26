@@ -9,6 +9,8 @@ import UIKit
 
 import TwilioVideo
 
+import Foundation
+
 class ViewController: UIViewController {
 
     // MARK:- View Controller Members
@@ -18,7 +20,7 @@ class ViewController: UIViewController {
     var accessToken = "TWILIO_ACCESS_TOKEN"
   
     // Configure remote URL to fetch token from
-    let tokenUrl = "http://localhost:8000/token.php"
+    let tokenUrl = "https://maize-dragonfly-9604.twil.io/quick-start"
     
     // Video SDK components
     var room: Room?
@@ -27,6 +29,8 @@ class ViewController: UIViewController {
     var localAudioTrack: LocalAudioTrack?
     var remoteParticipant: RemoteParticipant?
     var remoteView: VideoView?
+    
+    var localVideotrackPublication: LocalVideoTrackPublication?
     
     // MARK:- UI Element Outlets and handles
     
@@ -125,11 +129,44 @@ class ViewController: UIViewController {
         self.view.addConstraint(height)
     }
     
+    
+//    class CheckPriorityTimer {
+//            private var myTimer: Timer
+//
+//            let interval_func = { (time:Timer) in
+//
+//                let publishPriority = localVideotrackPublication.priority
+//                print(publishPriority)
+//            }
+//
+//            init() {
+//                myTimer = Timer.scheduledTimer(withTimeInterval: 5,
+//                                               repeats: true,
+//                                               block: self.interval_func)
+//            }
+//    }
+    
+    
+    
+    
     func connectToARoom() {
         
         self.connectButton.isEnabled = true;
         // Prepare local media which we will share with Room Participants.
         self.prepareLocalMedia()
+        
+        
+        let videoOptions = VideoBandwidthProfileOptions { builder in
+            // Maximum bandwidth (Kbps) to be allocated to subscribed RemoteVideoTracks
+            builder.maxSubscriptionBitrate = 0
+
+            // Subscription mode: collaboration, grid, presentation
+            builder.mode = .presentation
+
+            // Track Switch Off mode: .detected, .predicted, .disabled
+            builder.trackSwitchOffMode = .predicted
+        }
+        let bandwidthProfileOptions = BandwidthProfileOptions(videoOptions: videoOptions)
         
         // Preparing the connect options with the access token that we fetched (or hardcoded).
         let connectOptions = ConnectOptions(token: accessToken) { (builder) in
@@ -137,6 +174,9 @@ class ViewController: UIViewController {
             // Use the local media that we prepared earlier.
             builder.audioTracks = self.localAudioTrack != nil ? [self.localAudioTrack!] : [LocalAudioTrack]()
             builder.videoTracks = self.localVideoTrack != nil ? [self.localVideoTrack!] : [LocalVideoTrack]()
+            
+            //setting bandwidth profile
+            builder.bandwidthProfileOptions = bandwidthProfileOptions
             
             // Use the preferred audio codec
             if let preferredAudioCodec = Settings.shared.audioCodec {
@@ -162,7 +202,7 @@ class ViewController: UIViewController {
             // Room `name`, the Client will create one for you. You can get the name or sid from any connected Room.
             builder.roomName = self.roomTextField.text
         }
-        
+
         // Connect to the Room using the options we provided.
         room = TwilioVideoSDK.connect(options: connectOptions, delegate: self)
         
@@ -194,7 +234,15 @@ class ViewController: UIViewController {
         } else {
             self.connectToARoom()
         }
+        
+        
+        
+//        CheckPriorityTimer()
     }
+    
+    
+
+    
     
     
     @IBAction func disconnect(sender: AnyObject) {
@@ -247,7 +295,20 @@ class ViewController: UIViewController {
                 self.previewView.addGestureRecognizer(tap)
             }
 
-            camera!.startCapture(device: frontCamera != nil ? frontCamera! : backCamera!) { (captureDevice, videoFormat, error) in
+            let supportedFormats = CameraSource.supportedFormats(captureDevice: backCamera!)
+            var formatFound: VideoFormat?
+            for format in supportedFormats {
+                if let formatCasted = format as? VideoFormat {
+                    if formatCasted.dimensions.height == 480 && formatCasted.dimensions.width == 640 {
+                    // if formatCasted.dimensions.height == 720 && formatCasted.dimensions.width == 1280 {
+                        formatFound = formatCasted
+                    }
+                }
+            }
+
+            formatFound?.frameRate = 15
+
+            camera!.startCapture(device: backCamera!, format: formatFound!) { (captureDevice, videoFormat, error) in
                 if let error = error {
                     self.logMessage(messageText: "Capture failed with error.\ncode = \((error as NSError).code) error = \(error.localizedDescription)")
                 } else {
@@ -378,6 +439,14 @@ extension ViewController : RoomDelegate {
         for remoteParticipant in room.remoteParticipants {
             remoteParticipant.delegate = self
         }
+        
+        // setting priority
+        // let localParticipant = room.localParticipant
+        // let localVideoTrackPublicationOptions = LocalTrackPublicationOptions(priority: .high)
+        
+        // localVideoTrack = localParticipant?.localVideoTracks[0].localTrack! as LocalVideoTrack
+        // localParticipant?.publishVideoTrack(localVideoTrack, publicationOptions: localVideoTrackPublicationOptions)
+        
     }
 
     func roomDidDisconnect(room: Room, error: Error?) {
