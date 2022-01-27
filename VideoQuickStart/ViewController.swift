@@ -130,21 +130,70 @@ class ViewController: UIViewController {
     }
     
     
-//    class CheckPriorityTimer {
-//            private var myTimer: Timer
-//
-//            let interval_func = { (time:Timer) in
-//
-//                let publishPriority = localVideotrackPublication.priority
-//                print(publishPriority)
-//            }
-//
-//            init() {
-//                myTimer = Timer.scheduledTimer(withTimeInterval: 5,
-//                                               repeats: true,
-//                                               block: self.interval_func)
-//            }
-//    }
+    
+    func startCheckingPriority(){
+        
+         Timer.scheduledTimer(withTimeInterval: 5,
+                                        repeats: true,
+                                        block: self.interval_func)
+    }
+    
+   func interval_func(time:Timer){
+       logMessage(messageText: "----------- interval_func -----------")
+       if (self.room != nil) {
+           let _localParticipant: LocalParticipant? = self.room!.localParticipant
+           if( _localParticipant != nil){
+               let localVideoPublication: LocalVideoTrackPublication = _localParticipant!.localVideoTracks[0];
+               let priority = localVideoPublication.priority
+               logMessage(messageText: "priority ------ \(String(describing: priority))")
+           }
+       }
+       
+   }
+    
+   func setPriorityLow(){
+       if (self.room != nil) {
+           let _localParticipant: LocalParticipant? = self.room!.localParticipant
+           if( _localParticipant != nil){
+               let localVideoPublication: LocalVideoTrackPublication = _localParticipant!.localVideoTracks[0];
+               localVideoPublication.priority = .low
+               logMessage(messageText: "-----------set priority low-----------")
+               logMessage(messageText: "-----------set priority low-----------")
+               logMessage(messageText: "-----------set priority low-----------")
+               logMessage(messageText: "-----------set priority low-----------")
+               logMessage(messageText: "-----------set priority low-----------")
+           }
+       }
+   }
+    
+    func PublishWithXXXPriority(){
+        logMessage(messageText: "-----PublishWithXXXPriority --------")
+        if(self.room != nil){
+            
+            let localParticipant = self.room!.localParticipant
+            
+            if(localParticipant?.localVideoTracks[0] != nil){
+                let localVideoTrackPublicationOptions = LocalTrackPublicationOptions(priority: .low)
+                localVideoTrack = (localParticipant?.localVideoTracks[0].localTrack!)! as LocalVideoTrack
+                localParticipant?.publishVideoTrack(localVideoTrack!, publicationOptions: localVideoTrackPublicationOptions)
+                logMessage(messageText: "-----publish with low priority --------")
+                logMessage(messageText: "-----publish with low priority --------")
+                
+                
+            }else{
+                logMessage(messageText: "-----localVideoTracks not found --------")
+                
+            }
+            
+        }else{
+            
+            logMessage(messageText: "----- no room --------")
+        }
+        
+
+        
+        
+    }
     
     
     
@@ -204,6 +253,10 @@ class ViewController: UIViewController {
         }
 
         // Connect to the Room using the options we provided.
+        
+        logMessage(messageText: "------ connect -----")
+        logMessage(messageText: "------ connect -----")
+        logMessage(messageText: "------ connect -----")
         room = TwilioVideoSDK.connect(options: connectOptions, delegate: self)
         
         logMessage(messageText: "Attempting to connect to room \(String(describing: self.roomTextField.text))")
@@ -214,6 +267,7 @@ class ViewController: UIViewController {
 
     // MARK:- IBActions
     @IBAction func connect(sender: AnyObject) {
+        
         self.connectButton.isEnabled = false;
         // Configure access token either from server or manually.
         // If the default wasn't changed, try fetching from server.
@@ -237,7 +291,7 @@ class ViewController: UIViewController {
         
         
         
-//        CheckPriorityTimer()
+        self.startCheckingPriority()
     }
     
     
@@ -440,13 +494,9 @@ extension ViewController : RoomDelegate {
             remoteParticipant.delegate = self
         }
         
-        // setting priority
-        // let localParticipant = room.localParticipant
-        // let localVideoTrackPublicationOptions = LocalTrackPublicationOptions(priority: .high)
-        
-        // localVideoTrack = localParticipant?.localVideoTracks[0].localTrack! as LocalVideoTrack
-        // localParticipant?.publishVideoTrack(localVideoTrack, publicationOptions: localVideoTrackPublicationOptions)
-        
+        self.PublishWithXXXPriority()
+        self.setPriorityLow()
+
     }
 
     func roomDidDisconnect(room: Room, error: Error?) {
