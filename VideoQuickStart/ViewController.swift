@@ -305,6 +305,7 @@ class ViewController: UIViewController {
     }
     
     @IBAction func toggleMic(sender: AnyObject) {
+        logMessage(messageText: "toggleMic")
         if (self.localAudioTrack != nil) {
             self.localAudioTrack?.isEnabled = !(self.localAudioTrack?.isEnabled)!
             
@@ -316,6 +317,23 @@ class ViewController: UIViewController {
             }
         }
     }
+
+
+    @IBAction func toggleVideo(sender: AnyObject) {
+        logMessage(messageText: "toggleVideo")
+        if (self.localVideoTrack != nil) {
+            self.localVideoTrack?.isEnabled = !(self.localVideoTrack?.isEnabled)!
+            
+            // Update the button title
+            if (self.localVideoTrack?.isEnabled == true) {
+                self.disconnectButton.setTitle("MuteVideo", for: .normal)
+            } else {
+                self.disconnectButton.setTitle("UnmuteVideo", for: .normal)
+            }
+        }
+    }
+
+
 
     // MARK:- Private
     func startPreview() {
